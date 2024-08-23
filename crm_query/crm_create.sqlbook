@@ -1,0 +1,53 @@
+-- SQLBook: Code
+CREATE DATABASE IF NOT EXISTS crm;
+-- SQLBook: Code
+USE crm;
+-- SQLBook: Code
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    person_id INT UNIQUE NOT NULL,
+    date_of_birth DATE,
+    address_id INT NOT NULL,
+    FOREIGN KEY (address_id) REFERENCES address(address_id),
+    FOREIGN KEY (person_id) REFERENCES person(person_id)
+);
+-- SQLBook: Code
+CREATE TABLE person (
+    person_id INT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+)
+-- SQLBook: Code
+CREATE TABLE address (
+    address_id INT PRIMARY KEY AUTO_INCREMENT,
+    street VARCHAR(50) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    zip_code VARCHAR(50) NOT NULL
+);
+-- SQLBook: Code
+CREATE sales_rep (
+    sales_rep_id INT PRIMARY KEY AUTO_INCREMENT,
+    person_id INT NOT NULL,
+    management_region VARCHAR(50) NOT NULL,
+    FOREIGN KEY (person_id) REFERENCES person(person_id)
+);
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS `mydb`.`contact` (
+  `person_id_1` INT UNSIGNED NOT NULL,
+  `person_id_2` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`person_id_1`, `person_id_2`),
+  INDEX `person_id_2_idx` (`person_id_2` ASC) VISIBLE,
+  CONSTRAINT `person_id_1`
+    FOREIGN KEY (`person_id_1`)
+    REFERENCES `mydb`.`person` (`person_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `person_id_2`
+    FOREIGN KEY (`person_id_2`)
+    REFERENCES `mydb`.`person` (`person_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB

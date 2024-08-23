@@ -1,0 +1,10 @@
+-- SQLBook: Code
+DROP DATABASE IF EXISTS crm;
+-- SQLBook: Code
+DROP TABLE IF EXISTS customer;
+-- SQLBook: Code
+DROP TABLE IF EXISTS address;
+-- SQLBook: Code
+DROP TABLE IF EXISTS person;
+-- SQLBook: Code
+DROP TABLE IF EXISTS sales_rep;
