@@ -1,56 +1,148 @@
 -- SQLBook: Code
--- Active: 1724409780351@@127.0.0.1@3306@crm
+-- Active: 1724435195844@@127.0.0.1@3306@crm
+-- SQLBook: Code
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='STRICT_TRANS_TABLES';
+SHOW WARNINGS;
 -- SQLBook: Code
 CREATE DATABASE IF NOT EXISTS crm;
+SHOW WARNINGS;
 -- SQLBook: Code
 USE crm;
+SHOW WARNINGS;
 -- SQLBook: Code
-CREATE TABLE customer (
-    customer_id INT PRIMARY KEY AUTO_INCREMENT,
-    person_id INT UNIQUE NOT NULL,
+CREATE TABLE IF NOT EXISTS person (
+    person_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
+    email VARCHAR(45) NOT NULL,
+    phone VARCHAR(15) NOT NULL
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS address (
+    address_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    street VARCHAR(45) NOT NULL,
+    city VARCHAR(45) NOT NULL,
+    state VARCHAR(45) NOT NULL,
+    zip_code VARCHAR(5) NOT NULL
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS product_category (
+    product_category_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    description VARCHAR(200)
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS campaign (
+    campaign_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    budget DECIMAL(16, 4) NOT NULL,
+    discription VARCHAR(200)
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS customer (
+    customer_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    person_id INT UNSIGNED UNIQUE NOT NULL,
+    address_id INT UNSIGNED,
     date_of_birth DATE,
-    address_id INT NOT NULL,
-    FOREIGN KEY (address_id) REFERENCES address(address_id),
-    FOREIGN KEY (person_id) REFERENCES person(person_id)
+    CONSTRAINT fk_customer__person__person_id
+        FOREIGN KEY (person_id) REFERENCES person(person_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fl_customer__address__address_id
+        FOREIGN KEY (address_id) REFERENCES address(address_id)
+        ON DELETE SET NULL
 );
+SHOW WARNINGS;
 -- SQLBook: Code
-CREATE TABLE person (
-    person_id INT PRIMARY KEY AUTO_INCREMENT,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL,
-    phone VARCHAR(50) NOT NULL,
-)
--- SQLBook: Code
-CREATE TABLE address (
-    address_id INT PRIMARY KEY AUTO_INCREMENT,
-    street VARCHAR(50) NOT NULL,
-    city VARCHAR(50) NOT NULL,
-    state VARCHAR(50) NOT NULL,
-    zip_code VARCHAR(50) NOT NULL
+CREATE TABLE IF NOT EXISTS connection (
+    person_id_1 INT UNSIGNED NOT NULL,
+    person_id_2 INT UNSIGNED NOT NULL,
+    CONSTRAINT pk_connection
+        PRIMARY KEY (person_id_1, person_id_2),
+    CONSTRAINT fk_connection__person__person_id_1
+        FOREIGN KEY (person_id_1) REFERENCES person(person_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_connection__person_person_id_2
+        FOREIGN KEY (person_id_2) REFERENCES person(person_id)
+        ON DELETE CASCADE
 );
+SHOW WARNINGS;
 -- SQLBook: Code
-CREATE sales_rep (
-    sales_rep_id INT PRIMARY KEY AUTO_INCREMENT,
-    person_id INT NOT NULL,
-    management_region VARCHAR(50) NOT NULL,
-    FOREIGN KEY (person_id) REFERENCES person(person_id)
+CREATE TABLE IF NOT EXISTS sales_rep (
+    sales_rep_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    person_id INT UNSIGNED UNIQUE NOT NULL,
+    management_region VARCHAR(20),
+    CONSTRAINT fk_sales_rep__person__person_id
+        FOREIGN KEY (person_id) REFERENCES person(person_id)
+        ON DELETE CASCADE
 );
+SHOW WARNINGS;
 -- SQLBook: Code
--- Active: 1724409780351@@127.0.0.1@3306@crm
-CREATE TABLE IF NOT EXISTS `mydb`.`contact` (
-  `person_id_1` INT UNSIGNED NOT NULL,
-  `person_id_2` INT UNSIGNED NOT NULL,
-  PRIMARY KEY (`person_id_1`, `person_id_2`),
-  INDEX `person_id_2_idx` (`person_id_2` ASC) VISIBLE,
-  CONSTRAINT `person_id_1`
-    FOREIGN KEY (`person_id_1`)
-    REFERENCES `mydb`.`person` (`person_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `person_id_2`
-    FOREIGN KEY (`person_id_2`)
-    REFERENCES `mydb`.`person` (`person_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
+CREATE TABLE IF NOT EXISTS product (
+    product_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    price DECIMAL(16, 4) NOT NULL,
+    stock INT UNSIGNED NOT NULL,
+    product_category_id INT UNSIGNED NOT NULL,
+    discount TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    discription VARCHAR(200),
+    CONSTRAINT fk_product__product_category__product_category_id
+        FOREIGN KEY (product_category_id)
+        REFERENCES product_category(product_category_id)
+        ON DELETE CASCADE
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS `order` (
+    order_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    status ENUM('pending', 'completed', 'canceled') NOT NULL,
+    start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_date DATETIME,
+    CONSTRAINT fk_order__customer__customer_id
+        FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+        ON DELETE CASCADE
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS customer_interaction (
+    customer_interaction_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    sales_rep_id INT UNSIGNED NOT NULL,
+    date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    type ENUM('phone call', 'email', 'meeting') NOT NULL,
+    details VARCHAR(200) NOT NULL,
+    outcome VARCHAR(200) NOT NULL,
+    CONSTRAINT fk_customer_interaction__customer__customer_id
+        FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_customer_interactiom__sales_rep__sales_rep_id
+        FOREIGN KEY (sales_rep_id) REFERENCES sales_rep(sales_rep_id)
+        ON DELETE CASCADE
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS purchase (
+    order_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL,
+    CONSTRAINT pk_purchase_id
+        PRIMARY KEY (order_id, product_id),
+    CONSTRAINT fk_purchase__order__order_id
+        FOREIGN KEY (order_id) REFERENCES `order` (order_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_purchase__product__product_id
+        FOREIGN KEY (product_id) REFERENCES product(product_id)
+        ON DELETE CASCADE
+);
+SHOW WARNINGS;
+-- SQLBook: Code
+SET SQL_MODE=@OLD_SQL_MODE;
+SHOW WARNINGS;
+-- SQLBook: Markup
+CREATE UNIQUE INDEX primary_key_idx ON my_table (col1, col2, ...)
