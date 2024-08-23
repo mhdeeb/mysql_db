@@ -1,4 +1,6 @@
 -- SQLBook: Code
+-- Active: 1724409780351@@127.0.0.1@3306@crm
+-- SQLBook: Code
 CREATE DATABASE IF NOT EXISTS crm;
 -- SQLBook: Code
 USE crm;
@@ -35,6 +37,7 @@ CREATE sales_rep (
     FOREIGN KEY (person_id) REFERENCES person(person_id)
 );
 -- SQLBook: Code
+-- Active: 1724409780351@@127.0.0.1@3306@crm
 CREATE TABLE IF NOT EXISTS `mydb`.`contact` (
   `person_id_1` INT UNSIGNED NOT NULL,
   `person_id_2` INT UNSIGNED NOT NULL,
