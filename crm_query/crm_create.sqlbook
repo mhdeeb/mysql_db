@@ -1,23 +1,15 @@
 -- SQLBook: Code
--- Active: 1724435195844@@127.0.0.1@3306@crm
--- SQLBook: Code
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='STRICT_TRANS_TABLES';
-SHOW WARNINGS;
--- SQLBook: Code
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
 CREATE DATABASE IF NOT EXISTS crm;
-SHOW WARNINGS;
--- SQLBook: Code
 USE crm;
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS person (
     person_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     first_name VARCHAR(45) NOT NULL,
     last_name VARCHAR(45) NOT NULL,
-    email VARCHAR(45) NOT NULL,
-    phone VARCHAR(15) NOT NULL
+    email VARCHAR(45) UNIQUE NOT NULL,
+    phone VARCHAR(15) UNIQUE NOT NULL
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS address (
     address_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -26,14 +18,12 @@ CREATE TABLE IF NOT EXISTS address (
     state VARCHAR(45) NOT NULL,
     zip_code VARCHAR(5) NOT NULL
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS product_category (
     product_category_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(45) NOT NULL,
     description VARCHAR(200)
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS campaign (
     campaign_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -43,7 +33,6 @@ CREATE TABLE IF NOT EXISTS campaign (
     budget DECIMAL(16, 4) NOT NULL,
     discription VARCHAR(200)
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS customer (
     customer_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -57,7 +46,6 @@ CREATE TABLE IF NOT EXISTS customer (
         FOREIGN KEY (address_id) REFERENCES address(address_id)
         ON DELETE SET NULL
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS connection (
     person_id_1 INT UNSIGNED NOT NULL,
@@ -71,7 +59,6 @@ CREATE TABLE IF NOT EXISTS connection (
         FOREIGN KEY (person_id_2) REFERENCES person(person_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS sales_rep (
     sales_rep_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -81,7 +68,6 @@ CREATE TABLE IF NOT EXISTS sales_rep (
         FOREIGN KEY (person_id) REFERENCES person(person_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS product (
     product_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -96,7 +82,6 @@ CREATE TABLE IF NOT EXISTS product (
         REFERENCES product_category(product_category_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS `order` (
     order_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -108,7 +93,6 @@ CREATE TABLE IF NOT EXISTS `order` (
         FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS customer_interaction (
     customer_interaction_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
@@ -125,7 +109,6 @@ CREATE TABLE IF NOT EXISTS customer_interaction (
         FOREIGN KEY (sales_rep_id) REFERENCES sales_rep(sales_rep_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS purchase (
     order_id INT UNSIGNED NOT NULL,
@@ -140,9 +123,7 @@ CREATE TABLE IF NOT EXISTS purchase (
         FOREIGN KEY (product_id) REFERENCES product(product_id)
         ON DELETE CASCADE
 );
-SHOW WARNINGS;
 -- SQLBook: Code
 SET SQL_MODE=@OLD_SQL_MODE;
-SHOW WARNINGS;
 -- SQLBook: Markup
 CREATE UNIQUE INDEX primary_key_idx ON my_table (col1, col2, ...)

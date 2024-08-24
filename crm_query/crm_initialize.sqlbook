@@ -1,0 +1,79 @@
+-- SQLBook: Code
+DROP PROCEDURE IF EXISTS crm.add_person;
+DROP PROCEDURE IF EXISTS crm.add_customer;
+DROP PROCEDURE IF EXISTS crm.add_address;
+
+DELIMITER $$
+
+CREATE PROCEDURE crm.add_person(
+    IN first_name VARCHAR(45),
+    IN last_name VARCHAR(45),
+    IN email VARCHAR(45),
+    IN phone VARCHAR(15),
+    OUT person_id INT UNSIGNED
+)
+BEGIN
+    INSERT INTO crm.person (first_name, last_name, email, phone)
+        VALUES (first_name, last_name, email, phone);
+    SELECT LAST_INSERT_ID() INTO person_id;
+END$$
+
+CREATE PROCEDURE crm.add_customer(
+    IN person_id INT UNSIGNED,
+    IN address_id INT UNSIGNED,
+    IN date_of_birth DATE,
+    OUT customer_id INT UNSIGNED
+)
+BEGIN
+    INSERT INTO crm.customer (person_id, address_id, date_of_birth)
+        VALUES (person_id, address_id, date_of_birth);
+    SELECT LAST_INSERT_ID() INTO customer_id;
+END$$
+
+CREATE PROCEDURE crm.add_address(
+    IN street VARCHAR(45),
+    IN city VARCHAR(45),
+    IN state VARCHAR(45),
+    IN zip_code VARCHAR(5),
+    OUT address_id INT UNSIGNED
+)
+BEGIN
+    INSERT INTO crm.address (street, city, state, zip_code)
+        VALUES (street, city, state, zip_code);
+    SELECT LAST_INSERT_ID() INTO address_id;
+END$$
+
+DELIMITER ;
+-- SQLBook: Code
+
+-- SQLBook: Code
+
+CALL add_person('John', 'Doe', 'here@there.com', '011-111-1111', @person_id);
+CALL add_address('123 Main St', 'Anytown', 'NY', '12345', @address_id);
+CALL add_customer(@person_id, @address_id, '1980-01-01', @customer_id);
+-- SQLBook: Code
+SELECT
+    crm.person.person_id AS wow,
+    crm.person.first_name,
+    crm.person.last_name,
+    crm.person.email,
+    crm.person.phone,
+    crm.customer.date_of_birth,
+    crm.address.street,
+    crm.address.city,
+    crm.address.state,
+    crm.address.zip_code
+FROM
+crm.person
+JOIN crm.customer
+ON crm.person.person_id = crm.customer.person_id
+JOIN crm.address
+ON crm.customer.address_id = crm.address.address_id;
+
+SELECT * FROM crm.person;
+SELECT * FROM crm.customer;
+SELECT * FROM crm.address;
+-- SQLBook: Code
+DELETE FROM person WHERE person_id > 0;
+DELETE FROM customer WHERE customer_id > 0;
+DELETE FROM address WHERE address_id > 0;
