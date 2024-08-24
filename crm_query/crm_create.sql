@@ -1,28 +1,127 @@
--- SQLBook: Code
-DROP FUNCTION IF EXISTS crm.has_person;
-DROP PROCEDURE IF EXISTS crm.add_person;
-DROP PROCEDURE IF EXISTS crm.add_customer;
-DROP PROCEDURE IF EXISTS crm.add_address;
-DROP PROCEDURE IF EXISTS crm.add_product_category;
-DROP PROCEDURE IF EXISTS crm.add_campaign;
-DROP PROCEDURE IF EXISTS crm.add_sales_rep;
-DROP PROCEDURE IF EXISTS crm.add_connection;
-DROP PROCEDURE IF EXISTS crm.add_product;
-DROP PROCEDURE IF EXISTS crm.add_order;
-DROP PROCEDURE IF EXISTS crm.add_customer_interaction;
-DROP PROCEDURE IF EXISTS crm.add_purchase;
--- SQLBook: Code
-DELETE FROM person WHERE TRUE;
-DELETE FROM customer WHERE TRUE;
-DELETE FROM address  WHERE TRUE;
-DELETE FROM product_category  WHERE TRUE;
-DELETE FROM campaign  WHERE TRUE;
-DELETE FROM connection WHERE TRUE;
-DELETE FROM crm.product WHERE TRUE;
-DELETE FROM crm.order WHERE TRUE;
-DELETE FROM crm.customer_interaction WHERE TRUE;
-DELETE FROM crm.purchase WHERE TRUE;
--- SQLBook: Code
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
+CREATE DATABASE IF NOT EXISTS crm;
+USE crm;
+
+CREATE TABLE IF NOT EXISTS person (
+    person_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
+    email VARCHAR(45) UNIQUE NOT NULL,
+    phone VARCHAR(15) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS address (
+    address_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    street VARCHAR(45) NOT NULL,
+    city VARCHAR(45) NOT NULL,
+    state VARCHAR(45) NOT NULL,
+    zip_code VARCHAR(5) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS product_category (
+    product_category_name VARCHAR(45) PRIMARY KEY,
+    description VARCHAR(200)
+);
+
+CREATE TABLE IF NOT EXISTS campaign (
+    campaign_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    budget DECIMAL(16, 4) NOT NULL,
+    description VARCHAR(200)
+);
+
+CREATE TABLE IF NOT EXISTS customer (
+    customer_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    person_id INT UNSIGNED UNIQUE NOT NULL,
+    address_id INT UNSIGNED,
+    date_of_birth DATE,
+    CONSTRAINT fk_customer__person__person_id
+        FOREIGN KEY (person_id) REFERENCES person(person_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fl_customer__address__address_id
+        FOREIGN KEY (address_id) REFERENCES address(address_id)
+        ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS connection (
+    person_1_id INT UNSIGNED NOT NULL,
+    person_2_id INT UNSIGNED NOT NULL,
+    CONSTRAINT pk_connection
+        PRIMARY KEY (person_1_id, person_2_id),
+    CONSTRAINT fk_connection__person__person_1_id
+        FOREIGN KEY (person_1_id) REFERENCES person(person_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_connection__person_person_2_id
+        FOREIGN KEY (person_2_id) REFERENCES person(person_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sales_rep (
+    sales_rep_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    person_id INT UNSIGNED UNIQUE NOT NULL,
+    management_region VARCHAR(20),
+    CONSTRAINT fk_sales_rep__person__person_id
+        FOREIGN KEY (person_id) REFERENCES person(person_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS product (
+    product_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    price DECIMAL(16, 4) NOT NULL,
+    stock INT UNSIGNED NOT NULL,
+    product_category_name VARCHAR(45) NOT NULL,
+    discount TINYINT UNSIGNED NOT NULL,
+    description VARCHAR(200),
+    CONSTRAINT fk_product__product_category__product_category_name
+        FOREIGN KEY (product_category_name)
+        REFERENCES product_category(product_category_name)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `order` (
+    order_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    status ENUM('pending', 'completed', 'canceled') NOT NULL DEFAULT 'pending',
+    start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_date DATETIME,
+    CONSTRAINT fk_order__customer__customer_id
+        FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS customer_interaction (
+    customer_interaction_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    sales_rep_id INT UNSIGNED NOT NULL,
+    date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    type ENUM('phone call', 'email', 'meeting') NOT NULL,
+    details VARCHAR(200) NOT NULL,
+    outcome VARCHAR(200) NOT NULL,
+    CONSTRAINT fk_customer_interaction__customer__customer_id
+        FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_customer_interaction__sales_rep__sales_rep_id
+        FOREIGN KEY (sales_rep_id) REFERENCES sales_rep(sales_rep_id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS purchase (
+    order_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    quantity INT UNSIGNED NOT NULL,
+    CONSTRAINT pk_purchase_id
+        PRIMARY KEY (order_id, product_id),
+    CONSTRAINT fk_purchase__order__order_id
+        FOREIGN KEY (order_id) REFERENCES `order` (order_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_purchase__product__product_id
+        FOREIGN KEY (product_id) REFERENCES product(product_id)
+        ON DELETE CASCADE
+);
+
 CREATE PROCEDURE crm.add_person(
     IN first_name VARCHAR(45),
     IN last_name VARCHAR(45),
@@ -35,7 +134,7 @@ BEGIN
         VALUES (first_name, last_name, email, phone);
     SELECT LAST_INSERT_ID() INTO person_id;
 END
--- SQLBook: Code
+
 CREATE FUNCTION crm.has_person (
     p_person_id INT UNSIGNED
 ) RETURNS TINYINT(1)
@@ -53,7 +152,7 @@ BEGIN
         RETURN 0;
     END IF;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_address(
     IN street VARCHAR(45),
     IN city VARCHAR(45),
@@ -66,7 +165,7 @@ BEGIN
         VALUES (street, city, state, zip_code);
     SELECT LAST_INSERT_ID() INTO address_id;
 END
--- SQLBook: Code
+
 CREATE FUNCTION crm.has_address (
     p_address_id INT UNSIGNED
 ) RETURNS TINYINT(1)
@@ -84,7 +183,7 @@ BEGIN
         RETURN 0;
     END IF;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_customer(
     IN date_of_birth DATE,
     IN street VARCHAR(45),
@@ -119,7 +218,7 @@ BEGIN
     SET address_id = address_id
     WHERE customer_id = customer_id;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_product_category(
     IN product_category_name VARCHAR(45),
     IN description VARCHAR(200)
@@ -128,7 +227,7 @@ BEGIN
     INSERT INTO crm.product_category (product_category_name, description)
         VALUES (product_category_name, description);
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_campaign (
     IN name VARCHAR(45),
     IN start_date DATE,
@@ -141,7 +240,7 @@ BEGIN
     INSERT INTO crm.campaign (name, start_date, end_date, budget, description)
         VALUES (name, start_date, end_date, budget, description);
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_sales_rep(
     IN management_region VARCHAR(20),
 
@@ -164,7 +263,7 @@ BEGIN
         VALUES (person_id, management_region);
     SELECT LAST_INSERT_ID() INTO sales_rep_id;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_connection (
     IN person_1_id INT UNSIGNED,
     IN person_2_id INT UNSIGNED
@@ -173,7 +272,7 @@ BEGIN
     INSERT INTO crm.connection (person_1_id, person_2_id)
         VALUES (person_1_id, person_2_id);
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_product (
     IN product_category_name VARCHAR(45),
     IN name VARCHAR(45),
@@ -188,7 +287,7 @@ BEGIN
         VALUES (product_category_name, name, price, stock, discount, description);
     SELECT LAST_INSERT_ID() INTO product_id;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_order (
     IN customer_id INT UNSIGNED,
     IN status ENUM('pending', 'completed', 'canceled'),
@@ -209,7 +308,7 @@ BEGIN
         VALUES (customer_id, status, start_date, end_date);
     SELECT LAST_INSERT_ID() INTO order_id;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_customer_interaction (
     IN customer_id INT UNSIGNED,
     IN sales_rep_id INT UNSIGNED,
@@ -228,7 +327,7 @@ BEGIN
         VALUES (customer_id, sales_rep_id, date, type, details, outcome);
     SELECT LAST_INSERT_ID() INTO customer_interaction_id;
 END
--- SQLBook: Code
+
 CREATE PROCEDURE crm.add_purchase (
     IN order_id INT UNSIGNED,
     IN product_id INT UNSIGNED,
@@ -238,28 +337,9 @@ BEGIN
     INSERT INTO crm.purchase (order_id, product_id, quantity)
         VALUES (order_id, product_id, quantity);
 END
--- SQLBook: Code
 
-CALL add_person('John', 'Doe', 'here@there.com', '011-111-1111', @person_id);
+SET SQL_MODE=@OLD_SQL_MODE;
 
-CALL add_customer('2017-06-15', '123 Main St', 'Anytown', 'NY', '12345', @person_id, NULL, NULL, NULL, NULL, @customer_id);
-
-CALL add_product_category('Electronics', 'Electronic devices');
-
--- NEEDS NORMALIZATION
-CALL add_campaign('Summer Sale', '2017-06-15', '2017-09-15', 10000.00, 'Summer Sale Campaign', @campaign_id);
-
-CALL add_sales_rep('North Region', @person2_id, 'John2', 'Doe2', 'here2@there.com', '022-111-1111', @sales_rep_id);
-
-CALL add_connection(@person_id, @person2_id);
-
--- NEEDS NORMALIZATION
-CALL add_product('Electronics', 'Laptop', 1000.00, 10, 0, 'Laptop description', @product_id);
-
--- NEEDS NORMALIZATION
-CALL add_order(@customer_id, NULL, NULL, '2025-06-15 13:00:00', @order_id);
-
--- NEEDS NORMALIZATION
-CALL add_customer_interaction(@customer_id, @sales_rep_id, NULL, 'phone call', 'Details', 'Outcome', @customer_interaction_id);
-
-CALL add_purchase(@order_id, @product_id, 3);
+/*markdown
+CREATE UNIQUE INDEX primary_key_idx ON my_table (col1, col2, ...)
+*/

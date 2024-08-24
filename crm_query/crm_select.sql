@@ -1,4 +1,3 @@
--- SQLBook: Code
 SELECT * FROM crm.person;
 SELECT * FROM crm.customer;
 SELECT * FROM crm.address;
@@ -10,7 +9,7 @@ SELECT * FROM crm.product;
 SELECT * FROM crm.order;
 SELECT * FROM crm.customer_interaction;
 SELECT * FROM crm.purchase;
--- SQLBook: Code
+
 SELECT
     crm.person.person_id AS wow,
     crm.person.first_name,
