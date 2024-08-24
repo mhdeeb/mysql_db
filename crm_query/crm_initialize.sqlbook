@@ -2,8 +2,10 @@
 DROP PROCEDURE IF EXISTS crm.add_person;
 DROP PROCEDURE IF EXISTS crm.add_customer;
 DROP PROCEDURE IF EXISTS crm.add_address;
+DROP FUNCTION IF EXISTS crm.has_person;
+DROP FUNCTION IF EXISTS crm.has_address;
 
-DELIMITER $$
+-- DELIMITER $$
 
 CREATE PROCEDURE crm.add_person(
     IN first_name VARCHAR(45),
@@ -16,19 +18,7 @@ BEGIN
     INSERT INTO crm.person (first_name, last_name, email, phone)
         VALUES (first_name, last_name, email, phone);
     SELECT LAST_INSERT_ID() INTO person_id;
-END$$
-
-CREATE PROCEDURE crm.add_customer(
-    IN person_id INT UNSIGNED,
-    IN address_id INT UNSIGNED,
-    IN date_of_birth DATE,
-    OUT customer_id INT UNSIGNED
-)
-BEGIN
-    INSERT INTO crm.customer (person_id, address_id, date_of_birth)
-        VALUES (person_id, address_id, date_of_birth);
-    SELECT LAST_INSERT_ID() INTO customer_id;
-END$$
+END
 
 CREATE PROCEDURE crm.add_address(
     IN street VARCHAR(45),
@@ -41,16 +31,82 @@ BEGIN
     INSERT INTO crm.address (street, city, state, zip_code)
         VALUES (street, city, state, zip_code);
     SELECT LAST_INSERT_ID() INTO address_id;
-END$$
+END
 
-DELIMITER ;
--- SQLBook: Code
+CREATE FUNCTION crm.has_person (
+    p_person_id INT UNSIGNED
+) RETURNS TINYINT(1)
+    DETERMINISTIC
+BEGIN
+    DECLARE person_count INT;
+    SET person_count = (
+        SELECT COUNT(*)
+        FROM crm.person
+        WHERE person_id = p_person_id
+    );
+    IF person_count > 0 THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END
 
+CREATE FUNCTION crm.has_address (
+    p_address_id INT UNSIGNED
+) RETURNS TINYINT(1)
+    DETERMINISTIC
+BEGIN
+    DECLARE address_count INT;
+    SET address_count = (
+        SELECT COUNT(*)
+        FROM crm.address
+        WHERE address_id = p_address_id
+    );
+    IF address_count > 0 THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END
+
+CREATE PROCEDURE crm.add_customer(
+    IN date_of_birth DATE,
+
+    INOUT person_id INT UNSIGNED,
+    INOUT address_id INT UNSIGNED,
+    
+    IN first_name VARCHAR(45),
+    IN last_name VARCHAR(45),
+    IN email VARCHAR(45),
+    IN phone VARCHAR(15),
+
+    IN street VARCHAR(45),
+    IN city VARCHAR(45),
+    IN state VARCHAR(45),
+    IN zip_code VARCHAR(5),
+    
+    OUT customer_id INT UNSIGNED
+)
+BEGIN
+    IF NOT has_person(person_id)
+    THEN
+        CALL add_person(first_name, last_name, email, phone, person_id);
+    END IF;
+
+    IF NOT has_address(address_id)
+    THEN
+        CALL add_address(street, city, state, zip_code, address_id);
+    END IF;
+    
+    INSERT INTO crm.customer (person_id, address_id, date_of_birth)
+        VALUES (person_id, address_id, date_of_birth);
+    SELECT LAST_INSERT_ID() INTO customer_id;
+END
 -- SQLBook: Code
 
 CALL add_person('John', 'Doe', 'here@there.com', '011-111-1111', @person_id);
 CALL add_address('123 Main St', 'Anytown', 'NY', '12345', @address_id);
-CALL add_customer(@person_id, @address_id, '1980-01-01', @customer_id);
+CALL add_customer('2017-06-15', @person_id, @address_id, 'John2', 'Doe2', 'here2@there.com', '022-111-1111', '1234 Main St', 'Anytown2', 'NY2', '12346', @output);
 -- SQLBook: Code
 SELECT
     crm.person.person_id AS wow,
