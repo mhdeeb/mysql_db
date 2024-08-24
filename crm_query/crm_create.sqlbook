@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS address (
 );
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS product_category (
-    product_category_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(45) NOT NULL,
+    product_category_name VARCHAR(45) PRIMARY KEY,
     description VARCHAR(200)
 );
 -- SQLBook: Code
@@ -31,7 +30,7 @@ CREATE TABLE IF NOT EXISTS campaign (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     budget DECIMAL(16, 4) NOT NULL,
-    discription VARCHAR(200)
+    description VARCHAR(200)
 );
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS customer (
@@ -48,15 +47,15 @@ CREATE TABLE IF NOT EXISTS customer (
 );
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS connection (
-    person_id_1 INT UNSIGNED NOT NULL,
-    person_id_2 INT UNSIGNED NOT NULL,
+    person_1_id INT UNSIGNED NOT NULL,
+    person_2_id INT UNSIGNED NOT NULL,
     CONSTRAINT pk_connection
-        PRIMARY KEY (person_id_1, person_id_2),
-    CONSTRAINT fk_connection__person__person_id_1
-        FOREIGN KEY (person_id_1) REFERENCES person(person_id)
+        PRIMARY KEY (person_1_id, person_2_id),
+    CONSTRAINT fk_connection__person__person_1_id
+        FOREIGN KEY (person_1_id) REFERENCES person(person_id)
         ON DELETE CASCADE,
-    CONSTRAINT fk_connection__person_person_id_2
-        FOREIGN KEY (person_id_2) REFERENCES person(person_id)
+    CONSTRAINT fk_connection__person_person_2_id
+        FOREIGN KEY (person_2_id) REFERENCES person(person_id)
         ON DELETE CASCADE
 );
 -- SQLBook: Code
@@ -74,19 +73,19 @@ CREATE TABLE IF NOT EXISTS product (
     name VARCHAR(45) NOT NULL,
     price DECIMAL(16, 4) NOT NULL,
     stock INT UNSIGNED NOT NULL,
-    product_category_id INT UNSIGNED NOT NULL,
-    discount TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    discription VARCHAR(200),
-    CONSTRAINT fk_product__product_category__product_category_id
-        FOREIGN KEY (product_category_id)
-        REFERENCES product_category(product_category_id)
+    product_category_name VARCHAR(45) NOT NULL,
+    discount TINYINT UNSIGNED NOT NULL,
+    description VARCHAR(200),
+    CONSTRAINT fk_product__product_category__product_category_name
+        FOREIGN KEY (product_category_name)
+        REFERENCES product_category(product_category_name)
         ON DELETE CASCADE
 );
 -- SQLBook: Code
 CREATE TABLE IF NOT EXISTS `order` (
     order_id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     customer_id INT UNSIGNED NOT NULL,
-    status ENUM('pending', 'completed', 'canceled') NOT NULL,
+    status ENUM('pending', 'completed', 'canceled') NOT NULL DEFAULT 'pending',
     start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     end_date DATETIME,
     CONSTRAINT fk_order__customer__customer_id
@@ -105,7 +104,7 @@ CREATE TABLE IF NOT EXISTS customer_interaction (
     CONSTRAINT fk_customer_interaction__customer__customer_id
         FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
         ON DELETE CASCADE,
-    CONSTRAINT fk_customer_interactiom__sales_rep__sales_rep_id
+    CONSTRAINT fk_customer_interaction__sales_rep__sales_rep_id
         FOREIGN KEY (sales_rep_id) REFERENCES sales_rep(sales_rep_id)
         ON DELETE CASCADE
 );

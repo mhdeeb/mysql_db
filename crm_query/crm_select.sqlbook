@@ -1,1 +1,30 @@
 -- SQLBook: Code
+SELECT * FROM crm.person;
+SELECT * FROM crm.customer;
+SELECT * FROM crm.address;
+SELECT * FROM crm.product_category;
+SELECT * FROM crm.campaign;
+SELECT * FROM crm.sales_rep;
+SELECT * FROM crm.connection;
+SELECT * FROM crm.product;
+SELECT * FROM crm.order;
+SELECT * FROM crm.customer_interaction;
+SELECT * FROM crm.purchase;
+-- SQLBook: Code
+SELECT
+    crm.person.person_id AS wow,
+    crm.person.first_name,
+    crm.person.last_name,
+    crm.person.email,
+    crm.person.phone,
+    crm.customer.date_of_birth,
+    crm.address.street,
+    crm.address.city,
+    crm.address.state,
+    crm.address.zip_code
+FROM
+crm.person
+JOIN crm.customer
+ON crm.person.person_id = crm.customer.person_id
+JOIN crm.address
+ON crm.customer.address_id = crm.address.address_id;
